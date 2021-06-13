@@ -74,7 +74,7 @@ Swap::~Swap() {}
 
 // Return back to the trade list page
 void Swap::pageTradeList() {
-    getSwap()->pageTradeList(false, false, false);
+    getSwap()->pageTradeList(false, false, false, false);
 }
 
 // request the list of swap trades

@@ -76,6 +76,7 @@ static QVector<SecCurrencyInfo> SWAP_CURRENCY_LIST = {
         SecCurrencyInfo("ZCash", 75, 24, 0.01, "ZEC", 0.0001, 0.00005, 0.001 ),
         SecCurrencyInfo("Dash", 60 * 2 + 39, 6, 0.01, "duff per byte", 26.0, 1.0, 1000.0 ),
         SecCurrencyInfo("Doge", 60, 20, 100.0, "doge", 3.0, 0.1, 20.0 ),
+        SecCurrencyInfo("Ether", 15, 20, 100.0, "doge", 3.0, 0.1, 20.0 ),
 };
 
 static SecCurrencyInfo getCurrencyInfo(const QString & currency) {
@@ -132,15 +133,15 @@ NextStateRespond Swap::execute() {
     if (!context->appContext->pullCookie<QString>("SwapShowNewTrade1").isEmpty())
         showNewTrade1();
     else
-        pageTradeList(false, false, false);
+        pageTradeList(false, false, false, false);
 
     return NextStateRespond( NextStateRespond::RESULT::WAIT_FOR_ACTION );
 }
 
 // Show first page with trade List
-void Swap::pageTradeList(bool selectIncoming, bool selectOutgoing, bool selectBackup) {
+void Swap::pageTradeList(bool selectIncoming, bool selectOutgoing, bool selectBackup, bool selectEthWallet) {
     selectedPage = SwapWnd::PageSwapList;
-    core::getWndManager()->pageSwapList(selectIncoming, selectOutgoing, selectBackup);
+    core::getWndManager()->pageSwapList(selectIncoming, selectOutgoing, selectBackup, selectEthWallet);
     context->stateMachine->notifyAboutNewState(STATE::SWAP);
 }
 
@@ -252,7 +253,7 @@ void Swap::onBackupSwapTradeData(QString swapId, QString exportedFileName, QStri
     swapTradesBackupStatus.insert(swapId, taskBkId);
 
     if (!errorMessage.isEmpty()) {
-        pageTradeList(false, false, true);
+        pageTradeList(false, false, true, false);
         core::getWndManager()->messageTextDlg("Error", "Wallet is unable to backup atomic swap trade at\n\n" + exportedFileName +
                 "\n\n" + errorMessage +
                 "\n\nPlease setup your backup directory and backup this trade.");
@@ -1066,7 +1067,7 @@ bool Swap::mobileBack() {
         case SwapWnd::PageSwapEdit:
         case SwapWnd::PageSwapTradeDetails:
         case SwapWnd::PageSwapNew1: {
-            pageTradeList(false,false,false);
+            pageTradeList(false,false,false, false);
             return true;
         }
         case SwapWnd::PageSwapNew2: {

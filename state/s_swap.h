@@ -48,7 +48,7 @@ public:
     virtual ~Swap() override;
 
     // Show first page with trade List
-    void pageTradeList(bool selectIncoming, bool selectOutgoing, bool selectBackup);
+    void pageTradeList(bool selectIncoming, bool selectOutgoing, bool selectBackup, bool selectEthWallet);
     // Edit/View Trade Page
     void viewTrade(QString swapId, QString stateCmd);
     // Show trade details page

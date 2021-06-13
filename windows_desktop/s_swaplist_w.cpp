@@ -151,9 +151,9 @@ double  SwapTradeInfo::calcRate() const {
 ///////////////////////////////////////////////////////////////////////
 // SwapList
 
-SwapList::SwapList(QWidget *parent, bool selectIncoming, bool selectOutgoing, bool selectBackup) :
-        core::NavWnd(parent),
-        ui(new Ui::SwapList) {
+SwapList::SwapList(QWidget *parent, bool selectIncoming, bool selectOutgoing, bool selectBackup, bool selectEthWallet) :
+    core::NavWnd(parent),
+    ui(new Ui::SwapList) {
     ui->setupUi(this);
 
     ui->progress->initLoader(false);
@@ -185,6 +185,8 @@ SwapList::SwapList(QWidget *parent, bool selectIncoming, bool selectOutgoing, bo
         tabSelection = 1;
     else if (selectBackup)
         tabSelection = 3;
+    else if (selectEthWallet)
+        tabSelection = 4;
 
     selectSwapTab(tabSelection);
 }
@@ -202,13 +204,20 @@ void SwapList::selectSwapTab(int selection) {
     ui->outgoingSwaps->setChecked(selection == 1);
     ui->completedSwaps->setChecked(selection == 2);
     ui->restoreTradesTab->setChecked(selection == 3);
+    ui->ethWalletTab->setChecked(selection == 4);
     if (selection == 3) {
         ui->restoreTradeHolder->show();
         ui->swapsTable->hide();
         ui->refreshBtnsHolder->hide();
-    }
-    else {
+        ui->ethWalletHolder->hide();
+    } else if (selection == 4) { //ethereum wallet Tab
         ui->restoreTradeHolder->hide();
+        ui->swapsTable->hide();
+        ui->refreshBtnsHolder->hide();
+        ui->ethWalletHolder->show();
+    }else {
+        ui->restoreTradeHolder->hide();
+        ui->ethWalletHolder->hide();
         ui->swapsTable->show();
         ui->refreshBtnsHolder->show();
 
@@ -251,7 +260,7 @@ void SwapList::sgnSwapTradesResult(QString cookie, QVector<QString> trades, QStr
     // < <bool is Seller>, <mwcAmount>, <sec+amount>, <sec_currency>, <Trade Id>, <State>, <initiate_time_interval>, <expire_time_interval>  <secondary_address> <last_process_error> >, ....
     for (int i = 11; i < trades.size(); i += 12) {
         SwapTradeInfo sti(trades[i - 11] == "true", trades[i - 10], trades[i - 9], trades[i - 8], trades[i - 7], trades[i - 6],
-                          trades[i - 5], trades[i - 4].toLongLong(), trades[i - 3].toLongLong(), trades[i-2], trades[i-1], trades[i]);
+                trades[i - 5], trades[i - 4].toLongLong(), trades[i - 3].toLongLong(), trades[i-2], trades[i-1], trades[i]);
         swapList.push_back(sti);
     }
 
@@ -301,20 +310,20 @@ void SwapList::updateTradeListData() {
         }
 
         switch (swapTabSelection) {
-            case 0: // incoming swaps
-                if (done || sw.isSeller)
-                    continue;
-                break;
-            case 1:
-                if (done || !sw.isSeller)
-                    continue;
-                break;
-            case 2:
-                if (!done)
-                    continue;
-                break;
-            default:
-                continue; // It is not a list update, just counting the items and updating the tabs
+        case 0: // incoming swaps
+            if (done || sw.isSeller)
+                continue;
+            break;
+        case 1:
+            if (done || !sw.isSeller)
+                continue;
+            break;
+        case 2:
+            if (!done)
+                continue;
+            break;
+        default:
+            continue; // It is not a list update, just counting the items and updating the tabs
         }
 
 
@@ -331,7 +340,7 @@ void SwapList::updateTradeListData() {
             itm->hbox().setContentsMargins(0, 0, 0, 0).setSpacing(4);
 
             itm->addWidget(
-                    control::createIcon(itm, sw.isSeller ? ":/img/iconSent@2x.svg" : ":/img/iconReceived@2x.svg", control::ROW_HEIGHT, control::ROW_HEIGHT));
+                        control::createIcon(itm, sw.isSeller ? ":/img/iconSent@2x.svg" : ":/img/iconReceived@2x.svg", control::ROW_HEIGHT, control::ROW_HEIGHT));
             itm->addWidget(control::createLabel(itm, false, false,
                                                 (sw.isSeller ? "Sell " : "Buy ") + sw.mwcAmount + " MWC for " +
                                                 sw.secondaryAmount + " " +  sw.secondaryCurrency +
@@ -348,20 +357,20 @@ void SwapList::updateTradeListData() {
             itm->addFixedVSpacer(control::VBOX_SPACING); // add extra spacing
             itm->hbox().setContentsMargins(0, 0, 0, 0);
             itm->addWidget(
-                    control::createLabel(itm, false, true, "Trade ID: " + sw.tradeId, control::FONT_SMALL)).setMinWidth(
-                    350);
+                        control::createLabel(itm, false, true, "Trade ID: " + sw.tradeId, control::FONT_SMALL)).setMinWidth(
+                        350);
             itm->addHSpacer().pop();
         }
         {
             itm->hbox().setContentsMargins(0, 0, 0, 0);
             sw.statusLable = (QLabel *) itm->addWidget(
-                    control::createLabel(itm, false, false, "", control::FONT_SMALL)).getCurrentWidget();
+                        control::createLabel(itm, false, false, "", control::FONT_SMALL)).getCurrentWidget();
             itm->addHSpacer().pop();
         }
         {
             itm->hbox().setContentsMargins(0, 0, 0, 0);
             sw.noteLabel = (QLabel *) itm->addWidget(
-                    control::createLabel(itm, true, false, "")).getCurrentWidget();
+                        control::createLabel(itm, true, false, "")).getCurrentWidget();
             itm->pop();
             sw.noteLabel->hide();
         }
@@ -382,21 +391,21 @@ void SwapList::updateTradeListData() {
         sw.cancelBtn = (control::RichButton *) itm->addWidget(
                     (new control::RichButton(itm, "Cancel", BTN_WIDTH, control::ROW_HEIGHT * 3 / 2,
                                              "Cancel this swap Trade", BTN_FONT_SIZE))->
-                            setCallback(this, "Cancel:" + sw.tradeId)).getCurrentWidget();
+                    setCallback(this, "Cancel:" + sw.tradeId)).getCurrentWidget();
 
         sw.deleteBtn = (control::RichButton *) itm->addWidget(
-                (new control::RichButton(itm, "Delete", BTN_WIDTH, control::ROW_HEIGHT * 3 / 2,
-                                         "Cancel this swap Trade", BTN_FONT_SIZE))->
-                        setCallback(this, "Delete:" + sw.tradeId)).getCurrentWidget();
+                    (new control::RichButton(itm, "Delete", BTN_WIDTH, control::ROW_HEIGHT * 3 / 2,
+                                             "Cancel this swap Trade", BTN_FONT_SIZE))->
+                    setCallback(this, "Delete:" + sw.tradeId)).getCurrentWidget();
 
         sw.backupBtn = (control::RichButton *) itm->addWidget((new control::RichButton(itm, "Backup", BTN_WIDTH, control::ROW_HEIGHT * 3 / 2,
-                                                "Backup your trade data, so you will be able to get a refund in case of the hardware failure",
-                                                BTN_FONT_SIZE))->
-                setCallback(this, "Backup:" + sw.tradeId + ":"+sw.stateCmd)).getCurrentWidget();
+                                                                                       "Backup your trade data, so you will be able to get a refund in case of the hardware failure",
+                                                                                       BTN_FONT_SIZE))->
+                                                              setCallback(this, "Backup:" + sw.tradeId + ":"+sw.stateCmd)).getCurrentWidget();
 
         sw.acceptBtn = (control::RichButton *) itm->addWidget((new control::RichButton(itm, "Accept", BTN_WIDTH, control::ROW_HEIGHT * 3 / 2,
-                                                "Review and accept this swap Trade", BTN_FONT_SIZE))->
-                setCallback(this, "Accept:" + sw.tradeId + ":"+sw.stateCmd)).getCurrentWidget();
+                                                                                       "Review and accept this swap Trade", BTN_FONT_SIZE))->
+                                                              setCallback(this, "Accept:" + sw.tradeId + ":"+sw.stateCmd)).getCurrentWidget();
 
         itm->addVSpacer();
 
@@ -438,18 +447,18 @@ void SwapList::richButtonPressed(control::RichButton *button, QString cookie) {
     } else if (cmd == "Delete") {
         button->hide();
         if (core::WndManager::RETURN_CODE::BTN2 == control::MessageBox::questionText(
-                this, "Swap Trade",
-                "Are you sure that you want to delete the swap " + tradeId + " from your records?",
-                "No", "Yes",
-                "Don't delete this swap record", "Yes, delete this swap record",
-                false, true)) {
+                    this, "Swap Trade",
+                    "Are you sure that you want to delete the swap " + tradeId + " from your records?",
+                    "No", "Yes",
+                    "Don't delete this swap record", "Yes, delete this swap record",
+                    false, true)) {
             ui->progress->show();
             swap->deleteSwapTrade(tradeId);
         }
     } else if (cmd == "Backup") {
         QString fileName = util->getSaveFileName("Backup the trade Data",
-                                                        "SwapTrades",
-                                                        "MWC Swap Trade (*.trade)", ".trade");
+                                                 "SwapTrades",
+                                                 "MWC Swap Trade (*.trade)", ".trade");
 
         if (fileName.isEmpty())
             return;
@@ -476,8 +485,8 @@ void SwapList::richButtonPressed(control::RichButton *button, QString cookie) {
 
 void SwapList::on_restoreTradeBtn_clicked() {
     QString fileName = util->getOpenFileName("Restore the trade Data",
-                                                    "SwapTrades",
-                                                    "MWC Swap Trade (*.trade)");
+                                             "SwapTrades",
+                                             "MWC Swap Trade (*.trade)");
     if ( fileName.isEmpty() )
         return;
 
@@ -573,29 +582,33 @@ void SwapList::sgnRestoreSwapTradeData(QString swapId, QString importedFilename,
     on_refreshButton_clicked();
 }
 
-void SwapList::on_outgoingSwaps_clicked() {
-    selectSwapTab(1);
-}
-
 void SwapList::on_incomingSwaps_clicked() {
     selectSwapTab(0);
+}
+
+void SwapList::on_outgoingSwaps_clicked() {
+    selectSwapTab(1);
 }
 
 void SwapList::on_completedSwaps_clicked() {
     selectSwapTab(2);
 }
 
-void SwapList::on_refreshButton_clicked() {
-    requestSwapList();
-}
-
 void SwapList::on_restoreTradesTab_clicked() {
     selectSwapTab(3);
 }
 
+void SwapList::on_ethWalletTab_clicked() {
+    selectSwapTab(4);
+}
+
+void SwapList::on_refreshButton_clicked() {
+    requestSwapList();
+}
+
 void SwapList::on_selectBackupDirBtn_clicked() {
     QString dir = QFileDialog::getExistingDirectory(this,
-            "Select trade backup directory");
+                                                    "Select trade backup directory");
     if (dir.isEmpty())
         return;
 

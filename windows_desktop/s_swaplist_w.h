@@ -101,7 +101,7 @@ struct SwapTradeInfo {
 class SwapList : public core::NavWnd, control::RichButtonPressCallback {
 Q_OBJECT
 public:
-    explicit SwapList(QWidget *parent, bool selectIncoming, bool selectOutgoing, bool selectBackup);
+    explicit SwapList(QWidget *parent, bool selectIncoming, bool selectOutgoing, bool selectBackup, bool selectEthWallet);
     ~SwapList();
 
 private:
@@ -132,15 +132,15 @@ private slots:
     void on_outgoingSwaps_clicked();
     void on_incomingSwaps_clicked();
     void on_completedSwaps_clicked();
+    void on_restoreTradesTab_clicked();
+    void on_ethWalletTab_clicked();
+
+
     void on_newTradeButton_clicked();
     void on_refreshButton_clicked();
 
-
-    void on_restoreTradesTab_clicked();
-
     void on_restoreTradeBtn_clicked();
     void on_selectBackupDirBtn_clicked();
-
     void on_swapBackupDir_textEdited(const QString &arg1);
 
 private:
