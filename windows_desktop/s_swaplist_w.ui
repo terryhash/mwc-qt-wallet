@@ -587,7 +587,7 @@ Please note that swap trade files are encrypted so you can restore it into the w
          </spacer>
         </item>
         <item alignment="Qt::AlignHCenter">
-         <widget class="control::MwcPushButtonNormal" name="pushButton">
+         <widget class="control::MwcPushButtonNormal" name="ethSendBtn">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
             <horstretch>0</horstretch>
@@ -596,7 +596,7 @@ Please note that swap trade files are encrypted so you can restore it into the w
           </property>
           <property name="minimumSize">
            <size>
-            <width>80</width>
+            <width>100</width>
             <height>0</height>
            </size>
           </property>
